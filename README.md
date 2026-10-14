@@ -281,11 +281,13 @@ AquaTrace is architected for zero-server overhead:
 - **Frontend:** Seamlessly deploys to **Vercel** with native Next.js edge performance.
 - **Backend:** Deploys as a containerized HTTP service using [`backend/Dockerfile.vercel`](backend/Dockerfile.vercel) on Vercel Fluid Compute or Google Cloud Run.
 - **Batch Pipeline:** Dispatched on demand via GitHub Actions [`pipeline.yml`](.github/workflows/pipeline.yml) using authenticated Google Cloud service account secrets.
+- **Step-by-Step Guide:** Follow the [Full Vercel Deployment Guide](docs/vercel-deployment.md) for environment variables and domain setup.
 
 ---
 
 ## 📖 Documentation
 
+- 🚀 [Vercel Deployment Walkthrough](docs/vercel-deployment.md)
 - 📐 [Architecture & System Design Deep-Dive](docs/architecture.md)
 - 🗄️ [Firestore Schema & Index Strategy](docs/firestore-data-model.md)
 - 💻 [Local Development Guide](docs/local-development.md)
