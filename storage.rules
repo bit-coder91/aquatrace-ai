@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Uploads and downloads go through the authenticated Spring Boot API.
+    // The server enforces site membership before using privileged credentials.
+    match /{object=**} {
+      allow read, write: if false;
+    }
+  }
+}

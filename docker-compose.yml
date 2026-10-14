@@ -1,0 +1,38 @@
+services:
+  api:
+    build: ./backend
+    environment:
+      PORT: 8081
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-aquatrace-local}
+      FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET:-demo-aquatrace-local.firebasestorage.app}
+      FIREBASE_EMULATOR_MODE: ${FIREBASE_EMULATOR_MODE:-true}
+      FIREBASE_AUTH_EMULATOR_HOST: firebase:9099
+      FIRESTORE_EMULATOR_HOST: firebase:8080
+      STORAGE_EMULATOR_HOST: http://firebase:9199
+      AQUATRACE_CORS_ALLOWED_ORIGINS: http://localhost:3000
+    ports: ["8081:8081"]
+    depends_on:
+      firebase:
+        condition: service_healthy
+  web:
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_FIREBASE_API_KEY: demo-key
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-aquatrace-local.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-aquatrace-local
+      NEXT_PUBLIC_FIREBASE_APP_ID: 1:000000000000:web:local-aquatrace
+      NEXT_PUBLIC_FIREBASE_EMULATOR: "true"
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8081
+    ports: ["3000:3000"]
+    depends_on: [api]
+  firebase:
+    build: ./scripts/firebase-emulator
+    command: ["emulators:start", "--project", "demo-aquatrace-local", "--only", "auth,firestore,storage"]
+    volumes: ["./:/workspace"]
+    working_dir: /workspace
+    ports: ["9099:9099", "8080:8080", "9199:9199", "4000:4000"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9099').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30

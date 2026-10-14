@@ -1,0 +1,42 @@
+name: run-data-pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: Site that owns the uploaded ingestion job
+        required: true
+        type: string
+      job_id:
+        description: Existing UPLOADED ingestion job ID from the application
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12', cache: pip, cache-dependency-path: data-pipeline/requirements.txt }
+      - run: python -m pip install -r data-pipeline/requirements.txt
+      - name: Run authorized pipeline job
+        env:
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ vars.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+          PIPELINE_SITE_ID: ${{ inputs.site_id }}
+          PIPELINE_JOB_ID: ${{ inputs.job_id }}
+          PYTHONPATH: data-pipeline/src
+        run: |
+          set -euo pipefail
+          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          credentials = Path(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
+          credentials.write_text(os.environ["FIREBASE_SERVICE_ACCOUNT_JSON"], encoding="utf-8")
+          credentials.chmod(0o600)
+          PY
+          python -m aquatrace_pipeline.run_authorized_job --site-id "$PIPELINE_SITE_ID" --job-id "$PIPELINE_JOB_ID"
